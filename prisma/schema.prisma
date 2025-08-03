@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email            String    @unique
+  password         String
+  businessNumber   String    @unique
+  companyName      String
+  contactPerson    String
+  phone            String
+  address          String
+  isVerified       Boolean   @default(false)
+  verificationCode String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  orders Order[]
+
+  @@map("users")
+}
+
+enum OrderType {
+  BOX
+  BULK
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  userId            String
+  orderType         OrderType
+  javaraQuantity    Int         @default(0)
+  returnCanQuantity Int         @default(0)
+  shippingDate      DateTime
+  shippingMethod    String
+  specialNotes      String?
+  status            OrderStatus @default(PENDING)
+  totalAmount       Decimal     @default(0)
+  orderDate         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("orders")
+}
+
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notices")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      String   // ORDER_CREATED, ORDER_UPDATED, ORDER_SHIPPED, etc.
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
